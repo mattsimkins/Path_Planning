@@ -13,8 +13,8 @@ At the time of this writing, PVF works for 2D cases, but a 3D version is being c
 * Python 3.12.3, Matplotlib 3.9, NumPy 1.26.4, JSON
 * Optionally, Turtle
 ## Installing
-* Download and unzip (or clone) pvf.py, pvf_fun.py, training_model.py, and  training_model_fun.py into your working directory
-* In the working directory, create a directory for putting your training trajectories. The repository contains a sample of trajectories within a directory called “Dataset”.
+* Download and unzip (or clone) pvf.py, pvf_fun.py, training_model.py, and  training_model_fun.py into your working directory.
+* In order to follow the README.md instruction create a directory called "Dataset" in your working directory. Move training trajectories named data<>.txt into Dataset.
 ## Executing program
 ### Creating and Training a New Model
 * At the top of your main program:
