@@ -207,55 +207,110 @@ class BuildGrid:
             updated_vec = np.add(hist_vec, scaled_diff_vec)
             self.grid[ind_i][ind_j][0] = updated_vec[0]
             self.grid[ind_i][ind_j][1] = updated_vec[1]
-        
     
-    def two_empty_nodes(self, loc, visited_nodes, left_ind, right_ind, center_ind):
-        pass
+    
+    def zero_empty_node(self, loc, triad_vecs, indices):
         
-        #Calculate location of nodes
-        loc_left = coord_from_ind(left_ind, self.node_spacing)
-        loc_right = coord_from_ind(right_ind, self.node_spacing)
-        loc_center = coord_from_ind(center_ind, self.node_spacing)
+        '''Calculates the next coordinate given a triad of vectors and the
+        current location. The "triad" of vectors is captured from the 3
+        closest nodes to the current location. If the nodes had never been
+        visited then they would contain zeros. Since this function is only 
+        called when all 3 nodes had been visited, it does not change the grid.
+        It only uses the grid to calculate the next point in the
+        calculated trajectory.
         
-        #Right and center nodes were empty, use left
-        if visited_nodes[0] == [1, 0, 0]:
-            loc_left_points_to = np.add(loc_left, vec_left)
-            vec_right = np.subtract(loc_left_points_to, loc_right)
-            vec_center = np.subtract(loc_left_points_to, loc_center)
+        Args:
         
-        #Left and center nodes were empty, use right
-        if visited_nodes == [0, 1, 0]:
-            loc_right_points_to = np.add(loc_right, vec_right)
-            vec_left = np.subtract(loc_right_points_to, loc_left)
-            vec_center = np.subtract(loc_right_points_to, loc_center)
-        
-        #Left and right nodes were empty, use center
-        if visited_nodes == [0, 0, 1]:
-            loc_center_points_to = np.add(loc_center, vec_center)
-            vec_right = np.subtract(loc_center_points_to, loc_right)
-            vec_left = np.subtract(loc_center_points_to, loc_left)
-        
-        #Populate any empty nodes
-        self.update_node(vec_left, left_ind)
-        self.update_node(vec_right, right_ind)
-        self.update_node(vec_center, center_ind)
-        
-        #All vectors point to same place, use of left is arbitrary
-        loc_array = loc + vec_left
-        
-        return loc_array
+            loc: Last coordinate added to the growing, calculated list,
+            Tuple(Float, Float)
+             
+            triad_vecs: The three triad vectors that were gathered
+            from the triad of nodes, List[npArray([Float, Float]), 
+            npArray([Float, Float])], npArray([Float, Float])].
+            
+            indices: Indices of the nodes to the left, right, and center 
+            (above or below) the location of interest respectively, 
+            List[List[Int, Int]], List[List[Int, Int], List[Int, Int]].
+            
+        Returns:
 
-    def one_empty_node(self, loc, triad_vecs, tail, visited_nodes, indices):
+            loc_np_array: Coordinate of next point in the calculated
+            trajectory, npArray([Float, Float])
+        '''
+        
+        #determine distances to neighboring grid nodes
+        dist2left = dist2node(loc, indices[0],\
+            self.node_spacing)
+        dist2right = dist2node(loc, indices[1],\
+            self.node_spacing)
+        dist2center = dist2node(loc, indices[2],\
+            self.node_spacing)
+        
+        #determine weights based on distances to nodes
+        den = dist2left + dist2center + dist2right
+        weight_left = (dist2center + dist2right - dist2left)/den
+        weight_right = (dist2center + dist2left - dist2right)/den
+        weight_center = (dist2left + dist2right - dist2center)/den
+        
+        #Weight the vectors
+        vec_left_weighted = weight_left*triad_vecs[0]
+        vec_right_weighted = weight_right*triad_vecs[1]
+        vec_center_weighted = weight_center*triad_vecs[2]
+        
+        #Sum weighted vectors
+        vec_l_plus_r = np.add(vec_left_weighted, vec_right_weighted)
+        vec_sum = np.add(vec_l_plus_r, vec_center_weighted)
+        loc_np_array = loc + vec_sum
+        return loc_np_array
+    
+        
+    def one_empty_node(self, loc, triad_vecs, visited_nodes, indices):
+        
+        '''Calculates a new coordinate based on a triad of grid vectors even
+        though one of those nodes had no triad vector, i.e. it was never
+        visited previously. This is done for 3 different cases, the left
+        node being empty, or the right node being empty, or the center node.
+        Rather than just leave the encountered empty node alone, the empty
+        node is instead updated with a vector that points to the next
+        calculated point in the trajectory. This helps populate empty nodes
+        without having to use a training trajectory.
+        
+        Args:
+        
+            loc: Last coordinate added to the growing, calculated list,
+            Tuple(Float, Float).
+            
+            triad_vecs: The three triad vectors that were gathered
+            from the triad of nodes, List[npArray([Float, Float]), 
+            npArray([Float, Float])], npArray([Float, Float])].
+            
+            visited_nodes: Boolean value indicating whether or not a node
+            had been visited previously, 1 for had been visited, 0 for a node
+            that had not been visited (contains no vector). The index position
+            corresponds to the left, right, and center triad nodes 
+            respectively, List[Int]
+            
+            indices: Indices of the nodes to the left, right, and center 
+            (above or below) the location of interest respectively, 
+            List[List[Int, Int]], List[List[Int, Int], List[Int, Int]].
+            
+        Returns:
+
+            loc_np_array: Coordinate of next point in the calculated
+            trajectory, npArray([Float, Float])
+            
+        '''
+        
         #Find distances to neighboring grid nodes
-        dist2left = dist2node(tail,\
+        dist2left = dist2node(loc,\
             indices[0], self.node_spacing)
-        dist2right = dist2node(tail,\
+        dist2right = dist2node(loc,\
             indices[1], self.node_spacing)
-        dist2center = dist2node(tail,\
+        dist2center = dist2node(loc,\
             indices[2], self.node_spacing)
         
         #Left node empty, use right and center
-        if visited_nodes == [0, 1, 1]:
+        if visited_nodes == [False, True, True]:
                                 
             #Determine weights based on distances to nodes
             den = dist2right + dist2center
@@ -269,15 +324,15 @@ class BuildGrid:
             #Calculate sum of weighted vectors
             vec_r_plus_c = np.add(vec_right_weighted,\
                 vec_center_weighted)
-            loc_array = loc + vec_r_plus_c
+            loc_np_array = loc + vec_r_plus_c
             
             #Populate empty node
             loc_left = coord_from_ind(indices[0], self.node_spacing)
-            vec_left = np.subtract(loc_array, loc_left)
+            vec_left = np.subtract(loc_np_array, loc_left)
             self.update_node(vec_left, indices[0])
             
         #Right node empty, use center and left
-        if visited_nodes == [1, 0, 1]:
+        if visited_nodes == [True, False, True]:
             
             #Determine weights based on distances to nodes
             den = dist2left + dist2center
@@ -291,15 +346,15 @@ class BuildGrid:
             #Calculate sum of weighted vectors
             vec_l_plus_c = np.add(vec_left_weighted,\
                 vec_center_weighted)
-            loc_array = loc + vec_l_plus_c
+            loc_np_array = loc + vec_l_plus_c
             
             #Populate empty node
             loc_right = coord_from_ind(indices[1], self.node_spacing)
-            vec_right = np.subtract(loc_array, loc_right)
+            vec_right = np.subtract(loc_np_array, loc_right)
             self.update_node(vec_right, indices[1])
             
         #Center node empty, use left and right
-        if visited_nodes == [1, 1, 0]:
+        if visited_nodes == [True, True, False]:
             
             #Determine weights based on distances to nodes
             den = dist2left + dist2right
@@ -313,20 +368,87 @@ class BuildGrid:
             #Calculate sum of weighted vectors
             vec_l_plus_r = np.add(vec_left_weighted,\
                 vec_right_weighted)
-            loc_array = loc + vec_l_plus_r
+            loc_np_array = loc + vec_l_plus_r
             
             #Populate empty node
             loc_center = coord_from_ind(indices[2], self.node_spacing)
-            vec_center = np.subtract(loc_array, loc_center)
+            vec_center = np.subtract(loc_np_array, loc_center)
             self.update_node(vec_center, indices[2])
             
             #Calculate sum of weighted vectors
             vec_l_plus_r = np.add(vec_left_weighted,\
                 vec_right_weighted)
-            loc_array = loc + vec_l_plus_r
+            loc_np_array = loc + vec_l_plus_r
             
-            return loc_array
+            return loc_np_array
+
+    def two_empty_nodes(self, loc, visited_nodes, indices):
+        
+        '''This function is similar to one_empty_node() in that it calculates
+        the next coordinate based on an incomplete triad of nodes.
+        Specifically, if two of the three triad nodes contains no vectors,
+        (i.e. are previously unvisited), this function calculates the next
+        coordinate based on the one node that does have a vector (was 
+        previouisly visited). The two empty nodes are updated with vectors
+        that point to the location specified by the non-zero node. In this way
+        the trajectory calculation populates zero nodes with vectors without
+        requiring training trajectories.
+        
+        Args:
+        
+            loc: Last coordinate added to the growing, calculated list,
+            Tuple(Float, Float).
             
+            visited_nodes: Boolean value indicating whether or not a node
+            had been visited previously, 1 for had been visited, 0 for a node
+            that had not been visited (contains no vector). The index position
+            corresponds to the left, right, and center triad nodes 
+            respectively, List[Int]
+            
+            indices: Indices of the nodes to the left, right, and center 
+            (above or below) the location of interest respectively, 
+            List[List[Int, Int]], List[List[Int, Int], List[Int, Int]].
+            
+        Returns:
+
+            loc_np_array:  Coordinate of next point in the calculated
+            trajectory, npArray([Float, Float])
+            
+        '''
+        
+        #Calculate location of nodes
+        loc_left = coord_from_ind(indices[0], self.node_spacing)
+        loc_right = coord_from_ind(indices[1], self.node_spacing)
+        loc_center = coord_from_ind(indices[2], self.node_spacing)
+        
+        #Right and center nodes were empty, use left
+        if visited_nodes[0] == [True, False, False]:
+            loc_left_points_to = np.add(loc_left, vec_left)
+            vec_right = np.subtract(loc_left_points_to, loc_right)
+            vec_center = np.subtract(loc_left_points_to, loc_center)
+        
+        #Left and center nodes were empty, use right
+        if visited_nodes == [False, True, False]:
+            loc_right_points_to = np.add(loc_right, vec_right)
+            vec_left = np.subtract(loc_right_points_to, loc_left)
+            vec_center = np.subtract(loc_right_points_to, loc_center)
+        
+        #Left and right nodes were empty, use center
+        if visited_nodes == [False, False, True]:
+            loc_center_points_to = np.add(loc_center, vec_center)
+            vec_right = np.subtract(loc_center_points_to, loc_right)
+            vec_left = np.subtract(loc_center_points_to, loc_left)
+        
+        #Populate any empty nodes
+        self.update_node(vec_left, indices[0])
+        self.update_node(vec_right, indices[1])
+        self.update_node(vec_center, indices[2])
+        
+        #All vectors point to same place, use of left is arbitrary
+        loc_np_array = loc + vec_left
+        
+        return loc_np_array
+    
         
     def av_traj(self, loc_start):
         
@@ -365,10 +487,15 @@ class BuildGrid:
 
         #Continues growing pseudo-average trajectory until a stop is generated
         while stop_calc == False:
+            
+            #Last coordinate added, loc wich grows in while loop
+            loc = av_traj[-1]
+            
+            #Check that nodes in the triad exceed grid space limits
             stop_calc = self.check_extents(loc, "triangle")
                 
             #Gather indices neighboring nodes
-            indices = find_trident(av_traj[-1], self.node_spacing)
+            indices = find_trident(loc, self.node_spacing)
                 
             #Gather vectors recorded in triad of neighboring nodes
             vec_left = np.array([self.grid[indices[0][0]][indices[0][1]][0],\
@@ -379,14 +506,14 @@ class BuildGrid:
                 [indices[2][1]][0],\
                     self.grid[indices[2][0]][indices[2][1]][1]])
             triad_vecs = [vec_left, vec_right, vec_center]
-            left_visited = 0
-            right_visited = 0
-            center_visited = 0
             
-            #Vector length of 0 indicates the node was unvisited
-            if np.linalg.norm(vec_left) != 0: left_visited = 1
-            if np.linalg.norm(vec_right) != 0: right_visited = 1
-            if np.linalg.norm(vec_center) != 0: center_visited = 1
+            #Determine if triad nodes were visited previously
+            left_visited = False
+            right_visited = False
+            center_visited = False
+            if np.linalg.norm(vec_left) != 0: left_visited = True
+            if np.linalg.norm(vec_right) != 0: right_visited = True
+            if np.linalg.norm(vec_center) != 0: center_visited = True
             visited_nodes = [left_visited, right_visited, center_visited]
             
             #Calculated pseudo average proceeds based on 3 cases
@@ -398,49 +525,26 @@ class BuildGrid:
             
             #Case 2 - Two of three nodes are empty, but recoverable
             if num_nodes_visited == 1:
-                loc_array = self.two_empty_nodes(loc, visited_nodes, indices)
+                loc_np_array = self.two_empty_nodes(loc, visited_nodes, indices)
                     
             #Case 3 - One of three nodes were zero
             if num_nodes_visited == 2:
-                
-                loc_array = self.one_empty_node(loc, triad_vecs, av_traj[-1], visited_nodes, indices)
-                
+                loc_np_array = self.one_empty_node(loc, triad_vecs, visited_nodes, indices)
                 
             #case 4 - All 3 nodes are non-zero (best case and most typical)
             if num_nodes_visited == 3:
-                #determine distances to neighboring grid nodes
-                dist2left = dist2node(av_traj[-1], indices[0],\
-                    self.node_spacing)
-                dist2right = dist2node(av_traj[-1], indices[1],\
-                    self.node_spacing)
-                dist2center = dist2node(av_traj[-1], indices[2],\
-                    self.node_spacing)
-                
-                #determine weights based on distances to nodes
-                den = dist2left + dist2center + dist2right
-                weight_left = (dist2center + dist2right - dist2left)/den
-                weight_right = (dist2center + dist2left - dist2right)/den
-                weight_center = (dist2left + dist2right - dist2center)/den
-                
-                #Weight the vectors
-                vec_left_weighted = weight_left*vec_left
-                vec_right_weighted = weight_right*vec_right
-                vec_center_weighted = weight_center*vec_center
-                
-                #Sum weighted vectors
-                vec_l_plus_r = np.add(vec_left_weighted, vec_right_weighted)
-                vec_sum = np.add(vec_l_plus_r, vec_center_weighted)
-                loc_array = loc + vec_sum
+                loc_np_array = self.zero_empty_node(loc, triad_vecs, indices)
             
-            loc = (loc_array[0].tolist(), loc_array[1].tolist())
+            #Needed because NumPy array won't append to list
+            new_loc = (loc_np_array[0].tolist(), loc_np_array[1].tolist())
             
             #Update running path length to ensure path does not run on forever
-            new_length = math.sqrt((loc[0]-av_traj[-1][0])**2 + \
-                (loc[1]-av_traj[-1][1])**2)
+            new_length = math.sqrt((new_loc[0]-loc[0])**2 + \
+                (new_loc[1]-loc[1])**2)
             running_path_length = running_path_length + new_length
             
             #Check if done
-            if loc == av_traj[-1]:
+            if new_loc == loc:
                 break
             
             #Margin% applied to comparisons against training history
@@ -458,9 +562,9 @@ class BuildGrid:
             #check that trajectory path is not much longer than average            
             if self.average_path_length < running_path_length:
                 stop_calc = True
-
+            
             #Grow trajectory by one coordinate
-            av_traj.append(loc)
+            av_traj.append(new_loc)
             
         return av_traj
 
