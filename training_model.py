@@ -208,6 +208,125 @@ class BuildGrid:
             self.grid[ind_i][ind_j][0] = updated_vec[0]
             self.grid[ind_i][ind_j][1] = updated_vec[1]
         
+    
+    def two_empty_nodes(self, loc, visited_nodes, left_ind, right_ind, center_ind):
+        pass
+        
+        #Calculate location of nodes
+        loc_left = coord_from_ind(left_ind, self.node_spacing)
+        loc_right = coord_from_ind(right_ind, self.node_spacing)
+        loc_center = coord_from_ind(center_ind, self.node_spacing)
+        
+        #Right and center nodes were empty, use left
+        if visited_nodes[0] == [1, 0, 0]:
+            loc_left_points_to = np.add(loc_left, vec_left)
+            vec_right = np.subtract(loc_left_points_to, loc_right)
+            vec_center = np.subtract(loc_left_points_to, loc_center)
+        
+        #Left and center nodes were empty, use right
+        if visited_nodes == [0, 1, 0]:
+            loc_right_points_to = np.add(loc_right, vec_right)
+            vec_left = np.subtract(loc_right_points_to, loc_left)
+            vec_center = np.subtract(loc_right_points_to, loc_center)
+        
+        #Left and right nodes were empty, use center
+        if visited_nodes == [0, 0, 1]:
+            loc_center_points_to = np.add(loc_center, vec_center)
+            vec_right = np.subtract(loc_center_points_to, loc_right)
+            vec_left = np.subtract(loc_center_points_to, loc_left)
+        
+        #Populate any empty nodes
+        self.update_node(vec_left, left_ind)
+        self.update_node(vec_right, right_ind)
+        self.update_node(vec_center, center_ind)
+        
+        #All vectors point to same place, use of left is arbitrary
+        loc_array = loc + vec_left
+        
+        return loc_array
+
+    def one_empty_node(self, loc, triad_vecs, tail, visited_nodes, indices):
+        #Find distances to neighboring grid nodes
+        dist2left = dist2node(tail,\
+            indices[0], self.node_spacing)
+        dist2right = dist2node(tail,\
+            indices[1], self.node_spacing)
+        dist2center = dist2node(tail,\
+            indices[2], self.node_spacing)
+        
+        #Left node empty, use right and center
+        if visited_nodes == [0, 1, 1]:
+                                
+            #Determine weights based on distances to nodes
+            den = dist2right + dist2center
+            weight_right = dist2right/den
+            weight_center = dist2center/den
+            
+            #Weight the vectors
+            vec_right_weighted = weight_right*triad_vecs[1]
+            vec_center_weighted = weight_center*triad_vecs[2]
+            
+            #Calculate sum of weighted vectors
+            vec_r_plus_c = np.add(vec_right_weighted,\
+                vec_center_weighted)
+            loc_array = loc + vec_r_plus_c
+            
+            #Populate empty node
+            loc_left = coord_from_ind(indices[0], self.node_spacing)
+            vec_left = np.subtract(loc_array, loc_left)
+            self.update_node(vec_left, indices[0])
+            
+        #Right node empty, use center and left
+        if visited_nodes == [1, 0, 1]:
+            
+            #Determine weights based on distances to nodes
+            den = dist2left + dist2center
+            weight_left = dist2left/den
+            weight_center = dist2center/den
+            
+            #Weight the vectors
+            vec_left_weighted = weight_left*triad_vecs[0]
+            vec_center_weighted = weight_center*triad_vecs[2]
+            
+            #Calculate sum of weighted vectors
+            vec_l_plus_c = np.add(vec_left_weighted,\
+                vec_center_weighted)
+            loc_array = loc + vec_l_plus_c
+            
+            #Populate empty node
+            loc_right = coord_from_ind(indices[1], self.node_spacing)
+            vec_right = np.subtract(loc_array, loc_right)
+            self.update_node(vec_right, indices[1])
+            
+        #Center node empty, use left and right
+        if visited_nodes == [1, 1, 0]:
+            
+            #Determine weights based on distances to nodes
+            den = dist2left + dist2right
+            weight_left = dist2left/den
+            weight_right = dist2right/den
+            
+            #Weight the vectors
+            vec_left_weighted = weight_left*triad_vecs[0]
+            vec_right_weighted = weight_right*triad_vecs[1]
+            
+            #Calculate sum of weighted vectors
+            vec_l_plus_r = np.add(vec_left_weighted,\
+                vec_right_weighted)
+            loc_array = loc + vec_l_plus_r
+            
+            #Populate empty node
+            loc_center = coord_from_ind(indices[2], self.node_spacing)
+            vec_center = np.subtract(loc_array, loc_center)
+            self.update_node(vec_center, indices[2])
+            
+            #Calculate sum of weighted vectors
+            vec_l_plus_r = np.add(vec_left_weighted,\
+                vec_right_weighted)
+            loc_array = loc + vec_l_plus_r
+            
+            return loc_array
+            
         
     def av_traj(self, loc_start):
         
@@ -249,17 +368,17 @@ class BuildGrid:
             stop_calc = self.check_extents(loc, "triangle")
                 
             #Gather indices neighboring nodes
-            [left_ind, right_ind, center_ind] =\
-                find_trident(av_traj[-1], self.node_spacing)
+            indices = find_trident(av_traj[-1], self.node_spacing)
                 
             #Gather vectors recorded in triad of neighboring nodes
-            vec_left = np.array([self.grid[left_ind[0]][left_ind[1]][0],\
-                self.grid[left_ind[0]][left_ind[1]][1]])
-            vec_right = np.array([self.grid[right_ind[0]][right_ind[1]][0],\
-                self.grid[right_ind[0]][right_ind[1]][1]])
-            vec_center = np.array([self.grid[center_ind[0]]\
-                [center_ind[1]][0],\
-                    self.grid[center_ind[0]][center_ind[1]][1]])
+            vec_left = np.array([self.grid[indices[0][0]][indices[0][1]][0],\
+                self.grid[indices[0][0]][indices[0][1]][1]])
+            vec_right = np.array([self.grid[indices[1][0]][indices[1][1]][0],\
+                self.grid[indices[1][0]][indices[1][1]][1]])
+            vec_center = np.array([self.grid[indices[2][0]]\
+                [indices[2][1]][0],\
+                    self.grid[indices[2][0]][indices[2][1]][1]])
+            triad_vecs = [vec_left, vec_right, vec_center]
             left_visited = 0
             right_visited = 0
             center_visited = 0
@@ -268,6 +387,7 @@ class BuildGrid:
             if np.linalg.norm(vec_left) != 0: left_visited = 1
             if np.linalg.norm(vec_right) != 0: right_visited = 1
             if np.linalg.norm(vec_center) != 0: center_visited = 1
+            visited_nodes = [left_visited, right_visited, center_visited]
             
             #Calculated pseudo average proceeds based on 3 cases
             num_nodes_visited = left_visited + right_visited + center_visited
@@ -278,129 +398,22 @@ class BuildGrid:
             
             #Case 2 - Two of three nodes are empty, but recoverable
             if num_nodes_visited == 1:
-                
-                #Calculate location of nodes
-                loc_left = coord_from_ind(left_ind, self.node_spacing)
-                loc_right = coord_from_ind(right_ind, self.node_spacing)
-                loc_center = coord_from_ind(center_ind, self.node_spacing)
-                
-                #Right and center nodes were empty, use left
-                if left_visited == 1 and right_visited == 0 and\
-                    center_visited == 0:
-                    loc_left_points_to = np.add(loc_left, vec_left)
-                    vec_right = np.subtract(loc_left_points_to, loc_right)
-                    vec_center = np.subtract(loc_left_points_to, loc_center)
-                
-                #Left and center nodes were empty, use right
-                if left_visited == 0 and right_visited == 1 and\
-                    center_visited == 0:
-                    loc_right_points_to = np.add(loc_right, vec_right)
-                    vec_left = np.subtract(loc_right_points_to, loc_left)
-                    vec_center = np.subtract(loc_right_points_to, loc_center)
-                
-                #Left and right nodes were empty, use center
-                if left_visited == 0 and right_visited == 0 and\
-                    center_visited == 1:
-                    loc_center_points_to = np.add(loc_center, vec_center)
-                    vec_right = np.subtract(loc_center_points_to, loc_right)
-                    vec_left = np.subtract(loc_center_points_to, loc_left)
-                
-                #Populate any empty nodes
-                self.update_node(vec_left, left_ind)
-                self.update_node(vec_right, right_ind)
-                self.update_node(vec_center, center_ind)
-                
-                #All vectors point to same place, use of left is arbitrary
-                loc_array = loc + vec_left
+                loc_array = self.two_empty_nodes(loc, visited_nodes, indices)
                     
             #Case 3 - One of three nodes were zero
             if num_nodes_visited == 2:
                 
-                #Find distances to neighboring grid nodes
-                dist2right = dist2node(av_traj[-1],\
-                    right_ind, self.node_spacing)
-                dist2left = dist2node(av_traj[-1],\
-                    left_ind, self.node_spacing)
-                dist2center = dist2node(av_traj[-1],\
-                    center_ind, self.node_spacing)
+                loc_array = self.one_empty_node(loc, triad_vecs, av_traj[-1], visited_nodes, indices)
                 
-                #Left node empty, use right and center
-                if left_visited == 0 and right_visited == 1 and\
-                    center_visited == 1:
-                                        
-                    #Determine weights based on distances to nodes
-                    den = dist2right + dist2center
-                    weight_right = dist2right/den
-                    weight_center = dist2center/den
-                    
-                    #Weight the vectors
-                    vec_right_weighted = weight_right*vec_right
-                    vec_center_weighted = weight_center*vec_center
-                    
-                    #Calculate sum of weighted vectors
-                    vec_r_plus_c = np.add(vec_right_weighted,\
-                        vec_center_weighted)
-                    loc_array = loc + vec_r_plus_c
-                    
-                    #Populate empty node
-                    loc_left = coord_from_ind(left_ind, self.node_spacing)
-                    vec_left = np.subtract(loc_array, loc_left)
-                    self.update_node(vec_left, left_ind)
-                    
-                #Right node empty, use center and left
-                if left_visited == 1 and right_visited == 0 and \
-                    center_visited == 1:
-                    
-                    #Determine weights based on distances to nodes
-                    den = dist2left + dist2center
-                    weight_left = dist2left/den
-                    weight_center = dist2center/den
-                    
-                    #Weight the vectors
-                    vec_left_weighted = weight_left*vec_left
-                    vec_center_weighted = weight_center*vec_center
-                    
-                    #Calculate sum of weighted vectors
-                    vec_l_plus_c = np.add(vec_left_weighted,\
-                        vec_center_weighted)
-                    loc_array = loc + vec_l_plus_c
-                    
-                    #Populate empty node
-                    loc_right = coord_from_ind(right_ind, self.node_spacing)
-                    vec_right = np.subtract(loc_array, loc_right)
-                    self.update_node(vec_right, right_ind)
-                    
-                #Center node empty, use left and right
-                if left_visited == 1 and right_visited == 1 and\
-                    center_visited == 0:
-                    
-                    #Determine weights based on distances to nodes
-                    den = dist2left + dist2right
-                    weight_left = dist2left/den
-                    weight_right = dist2right/den
-                    
-                    #Weight the vectors
-                    vec_left_weighted = weight_left*vec_left
-                    vec_right_weighted = weight_right*vec_right
-                    
-                    #Calculate sum of weighted vectors
-                    vec_l_plus_r = np.add(vec_left_weighted,\
-                        vec_right_weighted)
-                    loc_array = loc + vec_l_plus_r
-                    
-                    #Populate empty node
-                    loc_center = coord_from_ind(center_ind, self.node_spacing)
-                    vec_center = np.subtract(loc_array, loc_center)
-                    self.update_node(vec_center, center_ind)
                 
-            #case 4 - All 3 nodes are non-zero (best case)
-            else:
+            #case 4 - All 3 nodes are non-zero (best case and most typical)
+            if num_nodes_visited == 3:
                 #determine distances to neighboring grid nodes
-                dist2left = dist2node(av_traj[-1], left_ind,\
+                dist2left = dist2node(av_traj[-1], indices[0],\
                     self.node_spacing)
-                dist2right = dist2node(av_traj[-1], right_ind,\
+                dist2right = dist2node(av_traj[-1], indices[1],\
                     self.node_spacing)
-                dist2center = dist2node(av_traj[-1], center_ind,\
+                dist2center = dist2node(av_traj[-1], indices[2],\
                     self.node_spacing)
                 
                 #determine weights based on distances to nodes
