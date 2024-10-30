@@ -56,11 +56,11 @@ class BuildGrid:
         Args:
         
             node_spacing: Key word node_spacing = A numerical value specifying
-            grid density.
+            grid density, Float.
         
         Returns:
         
-            traj_av: List[Tuple(float, float), Tuple(float, float), ...].
+            traj_av: List[Tuple(Float, Float), Tuple(Float, Float), ...].
             
             None: If node_spacing is not provided.
         '''
@@ -93,10 +93,12 @@ class BuildGrid:
         that shifts trajectories back to their original coordinates.
         
         Args:
-            upper_corner_loc: A 2-element list describing the x and y
-            location of the upper-right coordinate extent.
+        
+            upper_corner_loc: Gives the x and y location of the upper-right
+            coordinate extent, List[Float, Float].
         
         Returns:
+        
             N/A
         '''
         
@@ -126,16 +128,16 @@ class BuildGrid:
         
         Args:
         
-            loc: A catesian coordinate in grid space, Tupel(Float, Float)
+            loc: A catesian coordinate in grid space, Tupel(Float, Float).
             
             check_type: Accepts "point" or "triangle". If triangle is
             specified, the location of three neighboring nodes is
-            evaluated, String
+            evaluated, String.
             
         Returns:
         
             exceeded: A True value indicates that the location is invalid,
-            True or False
+            True or False.
         '''
         
         #Check is a specific location exceeds limits
@@ -177,9 +179,9 @@ class BuildGrid:
         Args:
         
             vec: A vector being used for the update,
-            numpy.array([Float, Float])
+            npArray([Float, Float]).
             
-            node_indices: The indices of the node being updated, [int, int].
+            node_indices: The indices of the node being updated, [Int, Int].
         
         Returns:
         
@@ -222,7 +224,7 @@ class BuildGrid:
         Args:
         
             loc: Last coordinate added to the growing, calculated list,
-            Tuple(Float, Float)
+            Tuple(Float, Float).
              
             triad_vecs: The three triad vectors that were gathered
             from the triad of nodes, List[npArray([Float, Float]), 
@@ -288,7 +290,7 @@ class BuildGrid:
             had been visited previously, 1 for had been visited, 0 for a node
             that had not been visited (contains no vector). The index position
             corresponds to the left, right, and center triad nodes 
-            respectively, List[Int]
+            respectively, List[Int].
             
             indices: Indices of the nodes to the left, right, and center 
             (above or below) the location of interest respectively, 
@@ -297,7 +299,7 @@ class BuildGrid:
         Returns:
 
             loc_np_array: Coordinate of next point in the calculated
-            trajectory, npArray([Float, Float])
+            trajectory, npArray([Float, Float]).
             
         '''
         
@@ -403,7 +405,7 @@ class BuildGrid:
             had been visited previously, 1 for had been visited, 0 for a node
             that had not been visited (contains no vector). The index position
             corresponds to the left, right, and center triad nodes 
-            respectively, List[Int]
+            respectively, List[Int].
             
             indices: Indices of the nodes to the left, right, and center 
             (above or below) the location of interest respectively, 
@@ -412,8 +414,7 @@ class BuildGrid:
         Returns:
 
             loc_np_array:  Coordinate of next point in the calculated
-            trajectory, npArray([Float, Float])
-            
+            trajectory, npArray([Float, Float]).
         '''
         
         #Calculate location of nodes
@@ -460,13 +461,13 @@ class BuildGrid:
         Args:
         
             loc_start: The start location to begin calculating the trajectory,
-            Tuple(Float, Float)
+            Tuple(Float, Float).
             
         Returns:
 
             av_traj: This calculated pseudo-average trajectory is the primary
             output of training, List[Tuple(Float, Float), Tuple(Float, Float),
-            ...]
+            ...].
         
             None: If trajectory calculation fails. This implies something is
             wrong with the grid model, or there was a start position located
@@ -580,7 +581,7 @@ class BuildGrid:
             
         Returns:
         
-            N/A
+            N/A.
         '''
         
         try:
@@ -707,10 +708,10 @@ class BuildGrid:
         
         Args:
         
-            N/A
+            N/A.
         
         Returns:
-            N/A
+            N/A.
         '''
         
         #For large grids the program may appear to hang
