@@ -17,13 +17,14 @@ class TrainModel(BuildGrid):
     sign.  
     '''
     
+    
     def save_model(self):
         '''Saves parameters TrainModel object, including the model state. For
         this reason, it is included as a class member function.
         
         Args:
         
-            N/A
+            N/A.
             
         Returns:
         
@@ -89,23 +90,23 @@ class TrainModel(BuildGrid):
             used to train a model.
             
             start_coord: The requested x and y coordinate of a start location
-            in task space for a calculated trajectory, Tuple(float, float)
+            in task space for a calculated trajectory, Tuple(Float, Float).
             
             extents: A coordinate frame that spans all training trajectories in
             task space. If None are passed the extents of the coordinate
             frame is automatically generated to fit the extents of trajectory
             data used for the first instance of training. If manually defined,
             extents include x-min, x-max, y-min, and y-max, and are given by
-            List[float, float, float, float]
+            List[Float, Float, Float, Float].
             
             traj_name: The name of the .txt trajectory file used for training,
-            and are given by a String with the .txt extension.
+            and are given by a String with the .txt extension, String.
         
         Returns:
         
             traj_av: A trajectory given by a series of x and y coordinates
-            in task space, List[Tuple(float, float), Tuple(float, float)
-            , Tuple(float, float), ...].
+            in task space, List[Tuple(float, float), Tuple(Float, Float), 
+            Tuple(Float, Float), ...].
             
             None: Returned for keyword errors, inconsistencies with model, a
             model failure, or invalid start point.
@@ -306,6 +307,7 @@ class TrainModel(BuildGrid):
                     shift_traj(grid_av_traj, self.shift2coord)
                 self.last_start_coord = self.av_trajectory[0]
                 return self.av_trajectory
+
 
 if __name__ == "__main__":
     pass
