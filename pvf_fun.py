@@ -6,6 +6,7 @@ import numpy as np
 #Constant that scales a grid spacing to the height of a triangle
 Y_FACT = math.sqrt(3)/2
 
+
 def open_model(file_path):
     
     '''Opens a model with the file name "model.json". The model is assumed
@@ -32,7 +33,7 @@ def open_model(file_path):
     except FileNotFoundError:
         return None
 
-#Read in trajectory from .txt file
+
 def read_traj(file_path, file_name):
     
     '''Reads in trajectories for training. Trajectories are structured as
@@ -83,6 +84,7 @@ def read_traj(file_path, file_name):
             return None
         
     return traj
+
 
 def convert_traj_ts2gs(traj, node_spacing, extents = None,\
     shift2traj_coord = None):
@@ -194,6 +196,7 @@ def convert_traj_ts2gs(traj, node_spacing, extents = None,\
         shifted_traj.append(shifted_grid_coord)
     return shifted_traj, grid_cart_extents, traj_shift_gs2ts
 
+
 def check(traj, extents):
     
     '''Consecutive duplicate coordinates in a trajectory are not permitted.
@@ -276,6 +279,7 @@ def check(traj, extents):
             print("Coordinate", removed_coord, 'was removed.')
     return traj_fixed
 
+
 def shift_traj(traj, shift):
     
     '''There are two coordinate frames associated with PVF. The first is "task
@@ -306,6 +310,7 @@ def shift_traj(traj, shift):
         coord = (c[0] + shift[0], c[1] + shift[1])
         traj_shifted.append(coord)
     return traj_shifted
+
     
 def find_shortest_seg(traj):
     '''Finds the shortest segment in a trajectory. When pseudo average
@@ -336,6 +341,7 @@ def find_shortest_seg(traj):
         if seg_length < shortest_segment:
             shortest_segment = seg_length
     return shortest_segment
+
 
 def plot_trajectory(data, title="data"):
     '''Plots a trajectory. The title is optional. The trajectory could be from
