@@ -119,7 +119,7 @@ class BuildGrid:
         param_list = 2
         self.grid = np.zeros((node_count_x, node_count_y, param_list))
         
-        
+            
     def check_extents(self, loc, check_type):
         
         '''As nodes are used for trajectory training, or for calculating
@@ -333,6 +333,8 @@ class BuildGrid:
             vec_left = np.subtract(loc_np_array, loc_left)
             self.update_node(vec_left, indices[0])
             
+            return loc_np_array
+            
         #Right node empty, use center and left
         if visited_nodes == [True, False, True]:
             
@@ -354,6 +356,8 @@ class BuildGrid:
             loc_right = coord_from_ind(indices[1], self.node_spacing)
             vec_right = np.subtract(loc_np_array, loc_right)
             self.update_node(vec_right, indices[1])
+            
+            return loc_np_array
             
         #Center node empty, use left and right
         if visited_nodes == [True, True, False]:
@@ -384,7 +388,8 @@ class BuildGrid:
             
             return loc_np_array
 
-    def two_empty_nodes(self, loc, visited_nodes, indices):
+
+    def two_empty_nodes(self, loc, triad_vecs, visited_nodes, indices):
         
         '''This function is similar to one_empty_node() in that it calculates
         the next coordinate based on an incomplete triad of nodes.
@@ -422,35 +427,42 @@ class BuildGrid:
         loc_right = coord_from_ind(indices[1], self.node_spacing)
         loc_center = coord_from_ind(indices[2], self.node_spacing)
         
-        #Right and center nodes were empty, use left
+        #Right and center nodes were empty, use left to update
         if visited_nodes[0] == [True, False, False]:
-            loc_left_points_to = np.add(loc_left, vec_left)
+            loc_left_points_to = np.add(loc_left, triad_vecs[0])
             vec_right = np.subtract(loc_left_points_to, loc_right)
             vec_center = np.subtract(loc_left_points_to, loc_center)
+            
+            #Populate any empty nodes
+            self.update_node(vec_right, indices[1])
+            self.update_node(vec_center, indices[2])
         
-        #Left and center nodes were empty, use right
+        #Left and center nodes were empty, use right to update
         if visited_nodes == [False, True, False]:
-            loc_right_points_to = np.add(loc_right, vec_right)
+            loc_right_points_to = np.add(loc_right, triad_vecs[1])
             vec_left = np.subtract(loc_right_points_to, loc_left)
             vec_center = np.subtract(loc_right_points_to, loc_center)
+            
+            #Populate any empty nodes
+            self.update_node(vec_left, indices[0])
+            self.update_node(vec_center, indices[2])
         
-        #Left and right nodes were empty, use center
+        #Left and right nodes were empty, use center to update
         if visited_nodes == [False, False, True]:
-            loc_center_points_to = np.add(loc_center, vec_center)
+            loc_center_points_to = np.add(loc_center, triad_vecs[2])
             vec_right = np.subtract(loc_center_points_to, loc_right)
             vec_left = np.subtract(loc_center_points_to, loc_left)
-        
-        #Populate any empty nodes
-        self.update_node(vec_left, indices[0])
-        self.update_node(vec_right, indices[1])
-        self.update_node(vec_center, indices[2])
+            
+            #Populate any empty nodes
+            self.update_node(vec_left, indices[0])
+            self.update_node(vec_right, indices[1])
         
         #All vectors point to same place, use of left is arbitrary
-        loc_np_array = loc + vec_left
+        loc_np_array = loc + triad_vecs[0]
         
         return loc_np_array
+
     
-        
     def av_traj(self, loc_start):
         
         '''Calculates a pseudo avrage trajectory using a trained grid. It is
@@ -526,7 +538,7 @@ class BuildGrid:
             
             #Case 2 - Two of three nodes are empty, but recoverable
             if num_nodes_visited == 1:
-                loc_np_array = self.two_empty_nodes(loc, visited_nodes, indices)
+                loc_np_array = self.two_empty_nodes(loc, triad_vecs, visited_nodes, indices)
                     
             #Case 3 - One of three nodes were zero
             if num_nodes_visited == 2:
