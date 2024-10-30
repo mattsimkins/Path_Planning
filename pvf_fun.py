@@ -13,13 +13,13 @@ def open_model(file_path):
         
     Args:
     
-        file_path: Relative path to data directory.
+        file_path: Relative path to data directory, String
         
     Returns:
     
         model: Includes a dictionary that should contains parameter
         
-        specified by the caller.
+        specified by the caller, Dict.
     '''
     
     try:
@@ -34,6 +34,7 @@ def open_model(file_path):
 
 #Read in trajectory from .txt file
 def read_traj(file_path, file_name):
+    
     '''Reads in trajectories for training. Trajectories are structured as
     two, space separated floating point values for x and y respectivel,
     followed by an end line. This function parces characters and formats
@@ -45,12 +46,12 @@ def read_traj(file_path, file_name):
         trajectory files for training, String.
         
         file_name: Gives the trajectory name for the .txt file being
-        read in as a trajectory
+        read in as a trajectory, String.
     
     Returns:
 
-        traj: A data type structured for use by PVF, List[tuple(float, float),
-        tuple(float, float), tuple(float, float), ...]
+        traj: A data type structured for use by PVF, List[Tuple(Float, Float),
+        Tuple(Float, Float), Tuple(Float, Float), ...].
     '''
     
     try:
@@ -83,7 +84,6 @@ def read_traj(file_path, file_name):
         
     return traj
 
-
 def convert_traj_ts2gs(traj, node_spacing, extents = None,\
     shift2traj_coord = None):
     '''Recieves a trajectory in task space and converts it to a
@@ -100,26 +100,35 @@ def convert_traj_ts2gs(traj, node_spacing, extents = None,\
     
     Args:
     
-        traj: A task space trajectory, List[Tuple(float, float), Tuple(float,
-        float), Tuple(float, float), ...]
+        traj: A task space trajectory, List[Tuple(Float, Float), Tuple(Float,
+        Float), ...].
         
         node_spacing: Spacing between nodes along edges of an equalateral
-        triangle, Float
+        triangle, Float.
         
         extents: Manually defined coordinate extents in task space given by 
-        min x, max x, min y, max y, List[float, float, float, float]
+        min x, max x, min y, max y respectively. If None the extents are
+        assigned automatically, List[Float, Float, Float, Float].
         
-        shift2traj_coord: A shift vector that is ordinarily return by this
-        function. If passed, it was found in a pre-existing model.
+        shift2traj_coord: If passed a shift is passed a pre-existing model was
+        loaded and this function is simply using the shift and extents being
+        passed to verify that the current training trajectory is in bounds. If
+        None is passed the function will calculate one along with new extents,
+        List[Float, Float].
         
     Returns:
     
         shifted_traj:
         
-        grid_cart_extents: 
+        grid_cart_extents: Grid space extents given task space trajectory size
+        or task space coordinate frame extents. Values are given as x-min,
+        x-max, y-min, and y-max respectively in the list List[Float, Float,
+        Float, Float].
         
-        traj_shift_gs2ts: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    '''    
+        traj_shift_gs2ts: The trajectory shift that was required to convert a
+        trajectory from grid space back to task space. List[Float, Float].
+    '''
+       
     #initialize with valid guesses
     min_x = traj[0][0]
     min_y = traj[0][1]
@@ -187,15 +196,26 @@ def convert_traj_ts2gs(traj, node_spacing, extents = None,\
 
 def check(traj, extents):
     
-    '''???
+    '''Consecutive duplicate coordinates in a trajectory are not permitted.
+    These can be thought as stalls in the trajectory whereby there are 2 or
+    more of the same coordinates. These are removed. Additionally, this
+    function checks that the coordinate frame extents are not exceeded.
     
     Args:
 
-        ?: ?
+        extents: x-min, x-max, y-min, and y-max, List[Float, Float, Float,
+        Float].
+        
+        traj: Trajectory possibly containing consecutive, duplicate
+        coordinates, or coordinates that exceed frame extents,
+        List[Tuple(Float, Float), Tuple(Float, Float), ...].
                 
     Returns:
         
-        ?: ?
+        traj_fixed: Trajectory with duplicates removed, if any, 
+        List[Tuple(Float, Float), Tuple(Float, Float), ...].
+        
+        None: Returned if coordinate frame extents are breached.
     '''
     
     #Check for correct data types and format
@@ -227,7 +247,8 @@ def check(traj, extents):
                 print("Error: tajectory exceeds x-axis limit")
                 print(error_msg)
                 return None
-        #cover the case for the last coordinate in trajectory
+            
+        #cover the case for reaching last coordinate in trajectory
         if i == len(traj)-1:
             if traj[i+1][0] < 0:
                 print("Error: tajectory crosses y-axis")
@@ -245,16 +266,18 @@ def check(traj, extents):
                 print("Error: tajectory exceeds x-axis limit")
                 print(error_msg)
                 return None
-                        
+    
+    traj_fixed = traj                    
     if len(duplicates_index_list) != 0:
         print("Trajectory contains", len(duplicates_index_list),\
             "duplicate coordinates that are being removed\n")
         for index in duplicates_index_list:
-            removed_coord = traj.pop(index)
+            removed_coord = traj_fixed.pop(index)
             print("Coordinate", removed_coord, 'was removed.')
-    return traj
+    return traj_fixed
 
 def shift_traj(traj, shift):
+    
     '''There are two coordinate frames associated with PVF. The first is "task
     space" (TS), the second is "grid space" (GS). GS has its origin at (0,0)
     while TS could have an origin with x or y located at a negative value.
@@ -265,14 +288,19 @@ def shift_traj(traj, shift):
     
     Args:
 
-        Traj: ?
+        Traj: The trajectory that needs to be shifted, List[tuple(Float,
+        Float), tuple(Float, Float), ...].
         
-        Shift: ?
+        Shift: A 2D vector specifying the amount of shift desired,
+        List[Float, Float].
                 
     Returns:
         
-        traj_shifted: ?
+        traj_shifted: The shifted tajectory. All points along the trajectory
+        are displaced by the shift vector, List[tuple(Float, Float), 
+        tuple(Float, Float), ...].
     '''
+    
     traj_shifted = []
     for c in traj:
         coord = (c[0] + shift[0], c[1] + shift[1])
@@ -291,11 +319,13 @@ def find_shortest_seg(traj):
     
     Args:
 
-        ?: ?
+        traj: The trajectory of interest. This could originate from task space
+        or grid space, List[tuple(Float, Float), tuple(Float, Float), ...].
                 
     Returns:
         
-        ?: ?
+        shortest_segment: The shortest segment encountered in the passed
+        trajectory, Float.
     '''
     shortest_segment = None
     for i in range(len(traj) - 1):
@@ -308,16 +338,21 @@ def find_shortest_seg(traj):
     return shortest_segment
 
 def plot_trajectory(data, title="data"):
-    '''plots array of trajectory coordinates
+    '''Plots a trajectory. The title is optional. The trajectory could be from
+    task space or grid space. This is purely a visualization tool.
     
     Args:
 
-        ?: ?
+        data: Trajectory to plot. Could originate from task space or grid
+        space, List[tuple(Float, Float), tuple(Float, Float), ...].
+        
+        title: Optional plot titel, None, or String.
                 
     Returns:
         
-        ?: ?
+        N/A
     '''
+    
     if data == None:
         pass
     else:
