@@ -38,6 +38,9 @@ traj = T.train_on_trajectory(path='Dataset', file_name="data1.txt", extents=[-70
 ```
 traj = T.train_on_trajectory(file_name=”data2.txt”)
 ```
+Note: If model training doesn't return a trajectory the first time, retraining one or two more times
+oftent does return a trajectory.
+
 * Each returned trajectory captures the model calculated pseudo-average trajectory based on all the data trained on until that point. You can visualize the model trajectory as follows:
 
 ```
