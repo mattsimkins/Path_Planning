@@ -232,7 +232,7 @@ class TrainModel(BuildGrid):
                 extents, self.shift2coord)
             
             #Check for duplicate coordinates
-            traj_gs = check(traj_ts2gs[0], self.grid_extents)
+            traj_gs = check_extents(traj_ts2gs[0], self.grid_extents)
             if traj_gs == None:
                 return None
             
@@ -266,7 +266,7 @@ class TrainModel(BuildGrid):
             traj_ts, self.node_spacing, extents, None)
         
         #Check for duplicate coordinates and exceeded coordinate frame bounds
-        traj_gs = check(traj_ts2gs[0], traj_ts2gs[1])
+        traj_gs = check_extents(traj_ts2gs[0], traj_ts2gs[1])
         if traj_gs == None: return None
         
         #Trajectory is valid, update class member variables
