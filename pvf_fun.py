@@ -197,7 +197,7 @@ def convert_traj_ts2gs(traj, node_spacing, extents = None,\
     return shifted_traj, grid_cart_extents, traj_shift_gs2ts
 
 
-def check(traj, extents):
+def check_extents(traj, extents):
     
     '''Consecutive duplicate coordinates in a trajectory are not permitted.
     These can be thought as stalls in the trajectory whereby there are 2 or
@@ -343,21 +343,31 @@ def find_shortest_seg(traj):
     return shortest_segment
 
 
-def plot_trajectory(data, title="data"):
+def plot_trajectory(data, title="data", **kwargs):
     '''Plots a trajectory. The title is optional. The trajectory could be from
     task space or grid space. This is purely a visualization tool.
+    
+    Kwargs:
+    
+        title: Optional plot titel, None, or String.
+        
+        extents: Allows user to specify plot extents. If None, the plot is
+        automatically scaled to fit the trajectory. This is given as x-min,
+        x-max, y-min, y-max, List[Float, Float, Float, Float]
     
     Args:
 
         data: Trajectory to plot. Could originate from task space or grid
         space, List[tuple(Float, Float), tuple(Float, Float), ...].
-        
-        title: Optional plot titel, None, or String.
                 
     Returns:
         
         N/A
     '''
+    
+    
+    #Allows user to specify coordinate ext
+    extents = kwargs.get("extents")    
     
     if data == None:
         pass
@@ -369,6 +379,13 @@ def plot_trajectory(data, title="data"):
             y2 = data[i+1][1]
             plt.plot([x1, x2], [y1, y2], c='blue')
             plt.scatter(x1, y1, c='blue')
+        
+        #Set extents
+        if extents != None:
+            plt.xlim(extents[0], extents[1])
+            plt.ylim(extents[2], extents[3])
+        
+        
         plt.title(title)
         plt.show()
         plt.close()
