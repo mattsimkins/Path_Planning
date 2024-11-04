@@ -343,7 +343,7 @@ def find_shortest_seg(traj):
     return shortest_segment
 
 
-def plot_trajectory(data, title="data", **kwargs):
+def plot_trajectory(*arg, title="data", **kwargs):
     '''Plots a trajectory. The title is optional. The trajectory could be from
     task space or grid space. This is purely a visualization tool.
     
@@ -357,7 +357,7 @@ def plot_trajectory(data, title="data", **kwargs):
     
     Args:
 
-        data: Trajectory to plot. Could originate from task space or grid
+        Trajectory to plot. Could originate from task space or grid
         space, List[tuple(Float, Float), tuple(Float, Float), ...].
                 
     Returns:
@@ -369,9 +369,8 @@ def plot_trajectory(data, title="data", **kwargs):
     #Allows user to specify coordinate ext
     extents = kwargs.get("extents")    
     
-    if data == None:
-        pass
-    else:
+    for data in arg:
+        
         for i in range(len(data) -1): 
             x1 = data[i][0]
             y1 = data[i][1]
@@ -380,15 +379,15 @@ def plot_trajectory(data, title="data", **kwargs):
             plt.plot([x1, x2], [y1, y2], c='blue')
             plt.scatter(x1, y1, c='blue')
         
-        #Set extents
-        if extents != None:
-            plt.xlim(extents[0], extents[1])
-            plt.ylim(extents[2], extents[3])
-        
-        
-        plt.title(title)
-        plt.show()
-        plt.close()
+    #Set extents
+    if extents != None:
+        plt.xlim(extents[0], extents[1])
+        plt.ylim(extents[2], extents[3])
+    
+    
+    plt.title(title)
+    plt.show()
+    plt.close()
 
 
 if __name__ == "__main__":
