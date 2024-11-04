@@ -709,7 +709,7 @@ class BuildGrid:
                 
                 #Encountered a trident of unvisited nodes
                 if traj_test == None:
-                    print("Warning: Model failed to calculate trajecoty.\n")
+                    print("Warning: Model failed to calculate trajectory.\n")
                     pass
                
                 
