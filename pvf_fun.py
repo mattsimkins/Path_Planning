@@ -2,6 +2,7 @@ import math
 import json
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.image as mpimg
 
 #Constant that scales a grid spacing to the height of a triangle
 Y_FACT = math.sqrt(3)/2
@@ -351,9 +352,16 @@ def plot_trajectory(*arg, title="data", **kwargs):
     
         title: Optional plot titel, None, or String.
         
-        extents: Allows user to specify plot extents. If None, the plot is
+        extents: Specify plot extents. If None, the plot is
         automatically scaled to fit the trajectory. This is given as x-min,
         x-max, y-min, y-max, List[Float, Float, Float, Float]
+        
+        image_file: Specifies the image file name to overlay trajectories 
+        onto. The image file must be located in the working directory, and it
+        was tested using .jpg image types. This feature is usefull for
+        visualizing trajectory obsticals, such as, roads or walls. However, 
+        the image extents must be properly sized and alligned to the task
+        space where the trajectory was generaged, String. 
     
     Args:
 
@@ -367,8 +375,22 @@ def plot_trajectory(*arg, title="data", **kwargs):
     
     
     #Allows user to specify coordinate ext
-    extents = kwargs.get("extents")    
+    extents = kwargs.get("extents")
     
+    #Allows user to specify a background image
+    img_name = kwargs.get("image_file")    
+    
+    if img_name != None:
+        img = mpimg.imread(img_name)   
+        
+        # Create a figure and axes
+        fig, ax = plt.subplots()
+        ax.imshow(img, extent=extents)
+        
+    else:
+        ax = plt
+
+    #Add plots of trajectories 
     for data in arg:
         
         for i in range(len(data) -1): 
@@ -376,14 +398,13 @@ def plot_trajectory(*arg, title="data", **kwargs):
             y1 = data[i][1]
             x2 = data[i+1][0]
             y2 = data[i+1][1]
-            plt.plot([x1, x2], [y1, y2], c='blue')
-            plt.scatter(x1, y1, c='blue')
+            ax.plot([x1, x2], [y1, y2], c='blue')
+            ax.scatter(x1, y1, c='blue')
         
-    #Set extents
+    #Set extents of plots
     if extents != None:
         plt.xlim(extents[0], extents[1])
         plt.ylim(extents[2], extents[3])
-    
     
     plt.title(title)
     plt.show()
