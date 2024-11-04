@@ -390,16 +390,20 @@ def plot_trajectory(*arg, title="data", **kwargs):
     else:
         ax = plt
 
-    #Add plots of trajectories 
+    #Add plots of trajectories
+    colors = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "olive", "cyan"] 
+    col_ind = 0
     for data in arg:
-        
         for i in range(len(data) -1): 
             x1 = data[i][0]
             y1 = data[i][1]
             x2 = data[i+1][0]
             y2 = data[i+1][1]
-            ax.plot([x1, x2], [y1, y2], c='blue')
-            ax.scatter(x1, y1, c='blue')
+            ax.plot([x1, x2], [y1, y2], c=colors[col_ind])
+            ax.scatter(x1, y1, c=colors[col_ind])
+        col_ind += 1
+        if col_ind > len(colors):
+            col_ind = 0
         
     #Set extents of plots
     if extents != None:
