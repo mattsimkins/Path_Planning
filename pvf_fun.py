@@ -62,6 +62,8 @@ def read_traj(file_path, file_name):
         content = traj_file.readlines()
         for line_char in content:
             x_done = False
+            if line_char == "":
+                break
             x_value = ""
             y_value = ""
             for one_char in line_char:
@@ -168,10 +170,9 @@ def convert_traj_ts2gs(traj, node_spacing, extents = None,\
         diff_x = extents[1] - extents[0]
         diff_y = extents[3] - extents[2]
         if diff_x < grid_cart_extents[0] or diff_y < grid_cart_extents[1]:            
-            print(("Trajectory exceeds given extents. Consider retraining usi"
-"ng larger exents than:\nmin x<{}\nmax x>{}\nmin y<{}\nmax y>{}, or do not tr"
-"ain with this trajectory\n"
-.format(extents[0], extents[1], extents[2], extents[3])))
+            print(("Trajectory exceeds given extents. Consider setting"
+"extents manually with :\nmin x<{}\nmax x>{}\nmin y<{}\nmax y>{}, or do not"
+"train with this trajectory\n".format(extents[0], extents[1], extents[2], extents[3])))
             return None
         
     #for user assigned extents, not using automatic extents assignment
@@ -232,8 +233,7 @@ def check_extents(traj, extents):
             duplicates_index_list.insert(0, i+1)
         
         #check if coordinates exceed gs extents
-        error_msg = "Consider retraining model with larger extents,\nor\
-            excluding the most recent trajectory from training.\n"
+        error_msg = "Consider retraining model with larger extents."
         if extents != None:
             if traj[i][0] < 0:
                 print("Error: tajectory crosses y-axis")
@@ -392,18 +392,19 @@ def plot_trajectory(*arg, title="data", **kwargs):
 
     #Add plots of trajectories
     colors = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "olive", "cyan"] 
-    col_ind = 0
+    marker_shape = ["o", "s", "^", "v", "*", "D", "h", "p"]
+    mark_ind = 0
     for data in arg:
         for i in range(len(data) -1): 
             x1 = data[i][0]
             y1 = data[i][1]
             x2 = data[i+1][0]
             y2 = data[i+1][1]
-            ax.plot([x1, x2], [y1, y2], c=colors[col_ind])
-            ax.scatter(x1, y1, c=colors[col_ind])
-        col_ind += 1
-        if col_ind > len(colors):
-            col_ind = 0
+            ax.plot([x1, x2], [y1, y2], c=colors[mark_ind])
+            ax.scatter(x1, y1, c=colors[mark_ind], marker=marker_shape[mark_ind])
+        mark_ind += 1
+        if mark_ind + 1 > len(colors):
+            mark_ind = 0
         
     #Set extents of plots
     if extents != None:
