@@ -184,6 +184,19 @@ class BuildGrid:
         function causes the last training trajectory to have a dominant
         effect over trajectories that were previously used for training.
         
+        The parameter direction_angle significantly affects performance, and
+        was under consideration for being added as a keyword argument. It sets
+        a threshold for how different the direction of an update vector can be
+        from a previously learned node vector. The purpose is best described
+        for pathes going to and from dead ends. Vectors along such paths going
+        to the dead end and from, will be directed rougly 180 degrees appart.
+        The path from the dead end is considered more relevant so the pathes 
+        to the dead end are entirely overwritten. A 180 degree difference is
+        achieved by setting direction_angle = 90 degrees, i.e. 90 degrees to
+        the left, and 90 to the right of an update vector. However, using an
+        angle much less than 90 degrees, such as 40 degrees, was found to
+        yield preferrable results when other factors are considered.
+        
         Args:
         
             vec: A vector being used for the update,
@@ -196,9 +209,12 @@ class BuildGrid:
             N/A
         '''
         
+        #Critically affects performance
+        self.direction_angle = 40
+        
         ind_i = node_indices[0]
         ind_j = node_indices[1]
-        
+
         #A node's fist visit, populate nodes if empty
         if self.grid[ind_i][ind_j][0] == 0 and \
             self.grid[ind_i][ind_j][1] == 0:
@@ -207,18 +223,42 @@ class BuildGrid:
         
         #Nodes not empty, update must consider previous value
         else:
+            #Convert vector in grid to np vector
             hist_vec = np.array([self.grid[ind_i][ind_j][0],\
                 self.grid[ind_i][ind_j][1]])
-            len_hist_vec = np.linalg.norm(hist_vec)
+            
+            #Dot current vector into vector saved in node
+            dot_prod = np.dot(vec, hist_vec)
+            
+            #Length update vector
             len_vec = np.linalg.norm(vec)
             
-            #Biases grid towards retaining longer vectors
-            scale_fact = len_vec/(len_vec + len_hist_vec)
-            diff_vec = np.subtract(vec, hist_vec)
-            scaled_diff_vec = diff_vec*scale_fact
-            updated_vec = np.add(hist_vec, scaled_diff_vec)
-            self.grid[ind_i][ind_j][0] = updated_vec[0]
-            self.grid[ind_i][ind_j][1] = updated_vec[1]
+            #Length vector already in node
+            len_hist_vec = np.linalg.norm(hist_vec)
+            
+            #Find the angle between both vectors
+            cos_theta = dot_prod / (len_vec*len_hist_vec)
+            
+            #Handle potential floating-point errors
+            cos_theta = np.clip(cos_theta, -1, 1)
+
+            angle_rad = np.arccos(cos_theta)
+            angle_deg = np.degrees(angle_rad)
+            
+            #Direction has changed, overwrite node
+            if angle_deg > self.direction_angle:
+                self.grid[ind_i][ind_j][0] = vec[0]
+                self.grid[ind_i][ind_j][1] = vec[1]
+            
+            #New vec is same direction as node, average the vectors
+            else:
+                #Biases grid towards retaining longer vectors
+                scale_fact = len_vec/(len_vec + len_hist_vec)
+                diff_vec = np.subtract(vec, hist_vec)
+                scaled_diff_vec = diff_vec*scale_fact
+                updated_vec = np.add(hist_vec, scaled_diff_vec)
+                self.grid[ind_i][ind_j][0] = updated_vec[0]
+                self.grid[ind_i][ind_j][1] = updated_vec[1]
     
     
     def zero_empty_node(self, loc, triad_vecs, indices):
