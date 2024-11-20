@@ -135,6 +135,7 @@ def find_trident(path_loc, node_sp):
         center_ind: Indices of the center node, [int, int, int]
     '''
     
+    #Setup unit vectors for dotting into
     unit_vecs = [(-1, 0), (-0.5, Y_FACT), (0.5, Y_FACT), \
         (1, 0), (0.5, -Y_FACT), (-0.5, -Y_FACT)]
     cls_ind = find_index_closest(path_loc, node_sp)
