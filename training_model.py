@@ -45,13 +45,13 @@ class BuildGrid:
         grid space. For example, the node to the imediate right of the lower
         left node is at the location (node_spacing, 0)
         
-        --- * ---- * ---- * --
-          /   \  /   \  /   \
-        * ---- * ---- * ---- *
-          \   /  \   /  \   /
-        --- * ---- * ---- * --
-          /   \  /   \  /   \
-        * ---- * ---- * ---- *
+        --- * ---- * ---- * 
+          /   \  /   \  /   
+        * ---- * ---- * ----
+          \   /  \   /  \   
+        --- * ---- * ---- * 
+          /   \  /   \  /   
+        * ---- * ---- * ----
         
         Args:
         
@@ -163,18 +163,26 @@ class BuildGrid:
                 right_ind[0] + 1 > self.grid.shape[0] or\
                 center_ind[1] < 0 or\
                 center_ind[1] + 1 > self.grid.shape[1]: exceeded = True
+                
         return exceeded
     
     
     def update_node(self, vec, node_indices):
         
-        '''Nodes are updated with a vector that goes from one coordinate in a
+        '''Overwriting this function with a different update strategy is the
+        easiest way to change the behavior of PVF. As written, PVF is heavily
+        biased towards the most recent training trajectories and the order of
+        training matters.
+        
+        Nodes are updated with a vector that goes from one coordinate in a
         trajectory to the next. The node is "visited" when a trajectroy
         coordinate passes within its "trident". If the node was never visited
         then its parameters are populated with the vector components. However,
         if the node was visited previously the update must consider the vector
         components that were already present for that node. In that case, the
-        update includes a series of vector operations.
+        update includes a series of vector operations. Behaviorally, this
+        function causes the last training trajectory to have a dominant
+        effect over trajectories that were previously used for training.
         
         Args:
         
@@ -203,6 +211,8 @@ class BuildGrid:
                 self.grid[ind_i][ind_j][1]])
             len_hist_vec = np.linalg.norm(hist_vec)
             len_vec = np.linalg.norm(vec)
+            
+            #Biases grid towards retaining longer vectors
             scale_fact = len_vec/(len_vec + len_hist_vec)
             diff_vec = np.subtract(vec, hist_vec)
             scaled_diff_vec = diff_vec*scale_fact
@@ -634,7 +644,7 @@ class BuildGrid:
             
             #check that location in trajectory is valid
             exceeded = self.check_extents(loc, "triangle")
-            if exceeded == True or zero_length_seg_present == True: break
+            if exceeded or zero_length_seg_present: break
             else:
                 #Reached end of traj list
                 if len(traj) == next_ind + 1: break
@@ -738,6 +748,7 @@ class BuildGrid:
 
         # Add vectors V and W to the plot
         for i in range(self.grid.shape[0]):
+            print(f"plot {round(100*i/self.grid.shape[0], 1)}% done", end="\r")
             for j in range(self.grid.shape[1]):
                 node_loc = coord_from_ind((i, j), self.node_spacing)
                 list_index = j+i*self.grid.shape[1]

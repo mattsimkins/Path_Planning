@@ -72,7 +72,7 @@ def read_traj(file_path, file_name):
                     pass
                 if x_done == False:
                     x_value = x_value + one_char
-                if x_done == True:
+                if x_done:
                     y_value = y_value + one_char
             traj.append((float(x_value), float(y_value)))
             traj_file.close()
@@ -344,7 +344,7 @@ def find_shortest_seg(traj):
     return shortest_segment
 
 
-def plot_trajectory(*arg, title="data", **kwargs):
+def plot_trajectory(*args, title="data", **kwargs):
     '''Plots a trajectory. The title is optional. The trajectory could be from
     task space or grid space. This is purely a visualization tool.
     
@@ -378,7 +378,7 @@ def plot_trajectory(*arg, title="data", **kwargs):
     extents = kwargs.get("extents")
     
     #Allows user to specify a background image
-    img_name = kwargs.get("image_file")    
+    img_name = kwargs.get("image_file")   
     
     if img_name != None:
         img = mpimg.imread(img_name)   
@@ -392,9 +392,9 @@ def plot_trajectory(*arg, title="data", **kwargs):
 
     #Add plots of trajectories
     colors = ["blue", "orange", "green", "red", "purple", "brown", "pink", "gray", "olive", "cyan"] 
-    marker_shape = ["o", "s", "^", "v", "*", "D", "h", "p"]
+    marker_shape = ["o", "s", "^", "v", "o", "s", "*", "D", "h", "p"]
     mark_ind = 0
-    for data in arg:
+    for data in args:
         for i in range(len(data) -1): 
             x1 = data[i][0]
             y1 = data[i][1]
@@ -415,6 +415,45 @@ def plot_trajectory(*arg, title="data", **kwargs):
     plt.show()
     plt.close()
 
+def update_node(self, vec, node_indices):
+        
+        '''Function overwrite in training_model.py.
+        
+        Args:
+        
+            vec: A vector being used for the update,
+            npArray([Float, Float]).
+            
+            node_indices: The indices of the node being updated, [Int, Int].
+        
+        Returns:
+        
+            N/A
+        '''
+        
+        ind_i = node_indices[0]
+        ind_j = node_indices[1]
+        
+        #A node's fist visit, populate nodes if empty
+        if self.grid[ind_i][ind_j][0] == 0 and \
+            self.grid[ind_i][ind_j][1] == 0:
+            self.grid[ind_i][ind_j][0] = vec[0]
+            self.grid[ind_i][ind_j][1] = vec[1]
+        
+        #Nodes not empty, update must consider previous value
+        else:
+            hist_vec = np.array([self.grid[ind_i][ind_j][0],\
+                self.grid[ind_i][ind_j][1]])
+            len_hist_vec = np.linalg.norm(hist_vec)
+            len_vec = np.linalg.norm(vec)
+            
+            #Biases grid towards retaining longer vectors
+            scale_fact = len_vec/(len_vec + len_hist_vec)
+            diff_vec = np.subtract(vec, hist_vec)
+            scaled_diff_vec = diff_vec*scale_fact
+            updated_vec = np.add(hist_vec, scaled_diff_vec)
+            self.grid[ind_i][ind_j][0] = updated_vec[0]
+            self.grid[ind_i][ind_j][1] = updated_vec[1]
 
 if __name__ == "__main__":
 
