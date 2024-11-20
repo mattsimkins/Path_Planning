@@ -16,7 +16,7 @@ class TrainModel(BuildGrid):
     Shifts from one space to the other use the same vector, but with opposite
     sign.  
     '''
-    
+
     
     def save_model(self):
         '''Saves parameters TrainModel object, including the model state. For
@@ -113,7 +113,7 @@ class TrainModel(BuildGrid):
         '''
                 
         path = kwargs.get("path")
-        if path != None:
+        if path:
             #Handle the case if a slash was not included
             if path[-1] != "/": path = path + "/"
             self.path2data = path
@@ -127,17 +127,17 @@ class TrainModel(BuildGrid):
         old_model = open_model(self.path2data)
         
         #Check extents
-        if extents != None:
+        if extents:
             if isinstance(extents, list) == False or len(extents) != 4:
                 print(("Extents must be provided in the form List[<x min" 
                        "num>, <x max num>, <y min num>, <y max num>]."))
                 extents = None
-            if extents != None and old_model != None:
+            if extents and old_model:
                 print('Saved model already exists. Extents will be ignored.')
                 extents = None
         
         #Prevent further execution if node spacing doesn't match model
-        if old_model != None and old_model["node_spacing"] != self.node_spacing:
+        if old_model and old_model["node_spacing"] != self.node_spacing:
             print("Error: A saved model was found having a node spacing of "
                   "{}, but the node spacing specified was {}."
                   .format(old_model["node_spacing"], self.node_spacing))
@@ -150,7 +150,7 @@ class TrainModel(BuildGrid):
             return None
         
         #Initializes model none exists to read in
-        if old_model != None and self.grid_update_count == 0:
+        if old_model and self.grid_update_count == 0:
             self.node_spacing = old_model["node_spacing"]
             self.grid_extents = old_model["grid_extents"]
             self.traj_extents = old_model["trajectory_extents"]
@@ -165,13 +165,11 @@ class TrainModel(BuildGrid):
             print("Old model was read in.")
         
         #User passes nothing and wants to see last saved average trajectory
-        if traj_name == None and old_model != None and\
-            start_coord == None:
+        if traj_name == None and old_model and start_coord == None:
             return old_model["model_trajectory"]
         
         #Model trained, user wants average trajectory based on start point
-        if traj_name == None and old_model\
-            != None and start_coord != None:
+        if traj_name == None and old_model and start_coord:
                 
             #Check that start coordinate is within training extents
             if start_coord[0] < self.traj_extents[0]:
@@ -212,14 +210,16 @@ class TrainModel(BuildGrid):
         #Check for valid model
         try:
             update_count = self.grid_update_count
+            
         except AttributeError:
             print(("Error: No training was found. Model may not save."
                    "Verify node spacing was specified when instantiatig "
                    "object."))
+            
             return None
         
         #Using an existing model, no new one is created
-        if old_model != None or (old_model == None and update_count != 0):
+        if old_model or (old_model == None and update_count != 0):
             traj_ts = read_traj(self.path2data, traj_name)
             
             #Check for valid structuring of trajectory
@@ -257,7 +257,6 @@ class TrainModel(BuildGrid):
 
                 return self.av_trajectory
                 
-
         #Section creating a new model, first read in trajecory
         traj_ts = read_traj(self.path2data, traj_name)
         
